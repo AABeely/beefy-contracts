@@ -1,3 +1,4 @@
+import dotenv from "dotenv";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-web3";
 import "@nomiclabs/hardhat-ethers";
@@ -5,6 +6,7 @@ import "@nomiclabs/hardhat-etherscan";
 import "@openzeppelin/hardhat-upgrades";
 import "@typechain/hardhat";
 import "./tasks";
+dotenv.config();
 
 import { HardhatUserConfig } from "hardhat/src/types/config";
 import { HardhatUserConfig as WithEtherscanConfig } from "hardhat/config";
@@ -40,6 +42,11 @@ const config: DeploymentConfig = {
     },
     polygon: {
       url: "https://polygon-rpc.com/",
+      chainId: 137,
+      accounts,
+    },
+    polygonFork: {
+      url: "https://polygon-mainnet.g.alchemy.com/v2/0-G9fcruyPvtcU9EYdtp9iyT5s8it5mU",
       chainId: 137,
       accounts,
     },
@@ -102,7 +109,8 @@ const config: DeploymentConfig = {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
-    apiKey: "",
+    apiKey: process.env.SNOWTRACE_API_KEY,
+    // apiKey: process.env.ETHERSCAN_API_KEY,
   },
   solidity: {
     compilers: [

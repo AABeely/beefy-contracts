@@ -13,7 +13,8 @@ export const chainCallFeeMap: Record<BeefyChain, number> = {
   arbitrum: defaultFee,
   moonriver: reducedFee,
   cronos: defaultFee,
-  localhost: reducedFee,
+  // localhost: reducedFee,
+  localhost: defaultFee, // Need to set localhost to match the correct fee for teh network
   celo: reducedFee,
-  aurora: reducedFee
+  aurora: reducedFee,
 };

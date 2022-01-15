@@ -38,7 +38,26 @@
     "flat-hardhat": "hardhat flatten contracts/BIFI/strategies/common/StrategyCommonRewardPoolSingle.sol > tmp/flattened.sol",
     "flat": "bin/flatten.sh",
     "flat:chain": "bin/flattenChainContracts.sh",
-    "abi-to-sol": "abi-to-sol"
+    "abi-to-sol": "abi-to-sol",
+
+    "fork:polygon": "npx hardhat node --fork polygon",
+    "deploy:polygon": "npx hardhat run --network localhost scripts/vault/deployStrategyQuickLP.js",
+    "deploy:polygon-prod": "npx hardhat run --network polygon scripts/vault/deploy-generic-rewardPool-strat.js",
+    "test:polygon": "npx hardhat test --network localhost test/prod/StrategyPolygonQuickLP.test.js",
+
+    "fork:fantom": "npx hardhat node --fork fantom",
+    "deploy:fantom": "npx hardhat run --network localhost scripts/vault/deploy-spirit-strat.ts",
+    "deploy:fantom-prod": "npx hardhat run --network polygon scripts/vault/deploy-generic-rewardPool-strat.js",
+    "test:fantom": "npx hardhat test --network localhost test/prod/StrategySpiritChefLP.test.js",
+    
+    "fork:avax": "npx hardhat node --fork avax",
+    "deploy:avax": "npx hardhat run --network localhost scripts/vault/deploy-pangolin.ts",
+    "deploy:avax-single": "npx hardhat run --network localhost scripts/vault/deploy-png-single-reward-pool.ts",
+    "deploy:avax-single-prod": "npx hardhat run --network avax scripts/vault/deploy-png-single-reward-pool.ts",
+    "deploy:avax-prod": "npx hardhat run --network avax scripts/vault/deploy-pangolin.ts",
+    "test:avax": "npx hardhat test --network localhost test/prod/VaultLifecyclePangolin.test.js",
+
+    "verify-vault": "npx hardhat run --network avax scripts/vault/verify-vault-post-deployment.ts"
   },
   "devDependencies": {
     "@chainlink/contracts": "^0.2.1",
