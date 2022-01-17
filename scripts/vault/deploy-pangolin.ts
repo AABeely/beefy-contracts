@@ -27,7 +27,7 @@ const vaultParams = {
   delay: 21600,
 };
 
-const shouldVerifyOnEtherscan = true;
+const shouldVerifyOnEtherscan = false;
 
 const strategyParams = {
   want,
@@ -35,7 +35,7 @@ const strategyParams = {
   outputToNativeRoute: [PNG, AVAX],
   outputToLp0Route: [PNG, USDCe],
   outputToLp1Route: [PNG, USDCe, USDTe],
-
+  rewardToOutputRoute: [],
   chef: minichef,
   unirouter: pangolin.router,
   strategist: "0x5EAeA735914bf0766428C85a20429020ba688130", // some address
@@ -92,7 +92,7 @@ async function main() {
     strategyParams.outputToNativeRoute,
     strategyParams.outputToLp0Route,
     strategyParams.outputToLp1Route,
-    // strategyParams.rewardToOutputRoute,
+    strategyParams.rewardToOutputRoute,
   ];
 
   const strategy = await Strategy.deploy(...strategyConstructorArguments);

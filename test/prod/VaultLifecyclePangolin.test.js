@@ -17,10 +17,10 @@ const myAddress = web3.utils.toChecksumAddress("0xD3425091b74bd097f6d8f194D30229
 const secondAddress = web3.utils.toChecksumAddress("0x5EAeA735914bf0766428C85a20429020ba688130");
 
 const config = {
-  vault: "0xB007733e376a69388D00b864Fb08e4C194585923",
+  vault: "0xDdFDB5562438a409156AebE9b7B6a30C1D6f510a",
   vaultContract: "BeefyVaultV6",
-  strategyContract: "StrategyCommonRewardPoolSingle",
-  testAmount: ethers.utils.parseEther("5"),
+  strategyContract: "StrategyPangolinMiniChefLP",
+  testAmount: ethers.utils.parseEther("50"),
   wnative: chainData.tokens.WNATIVE.address,
   // keeper: beefyfinance.keeper,
   // strategyOwner: beefyfinance.strategyOwner,
@@ -89,12 +89,15 @@ describe("VaultLifecycleTest", () => {
 
     const vaultBal = await vault.balance();
     const pricePerShare = await vault.getPricePerFullShare();
-    await delay(5000);
-    //  const callRewardBeforeHarvest = await strategy.callReward();
-    //  expect(callRewardBeforeHarvest).to.be.gt(0);
+    await delay(10000);
+
+    const callRewardBeforeHarvest = await strategy.callReward();
+    console.log("Call reward -->", callRewardBeforeHarvest);
+    expect(callRewardBeforeHarvest).to.be.gt(0);
+
     console.log("Vault Balance Pre Harvest -->", vaultBal);
-    // await strategy.harvest();
-    await strategy.managerHarvest();
+    await strategy["harvest()"](); // See issue why has to be called this way here: https://github.com/ethers-io/ethers.js/issues/119
+    // await strategy.managerHarvest();
     const vaultBalAfterHarvest = await vault.balance();
     console.log("Vault Balance Post Harvest -->", vaultBalAfterHarvest);
     const pricePerShareAfterHarvest = await vault.getPricePerFullShare();
@@ -192,6 +195,51 @@ describe("VaultLifecycleTest", () => {
 
     expect(stratReference).to.equal(ethers.utils.getAddress(strategy.address));
     expect(vaultReference).to.equal(ethers.utils.getAddress(vault.address));
+  }).timeout(TIMEOUT);
+
+  it("Manager can set and remove extra reward routes.", async () => {
+    await unpauseIfPaused(strategy, keeper);
+    await strategy.removeRewardRoute(); // Reset routes before testing
+
+    console.log("After reset");
+
+    console.log("Route before being set");
+    for (let i = 0; i < 10; ++i) {
+      try {
+        const tokenAddress = await strategy.rewardToOutputRoute(i);
+        console.log(`Token Address ${i} -->`, tokenAddress);
+      } catch (err) {}
+    }
+
+    console.log("Setting route");
+    await strategy.setRewardRoute([
+      "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+      "0x60781C2586D68229fde47564546784ab3fACA982",
+      // "0xc7198437980c041c805A1EDcbA50c1Ce5db95118",
+    ]);
+
+    console.log("Route after being set");
+    for (let i = 0; i < 10; ++i) {
+      try {
+        const tokenAddress = await strategy.rewardToOutputRoute(i);
+        console.log(`Token Address ${i} -->`, tokenAddress);
+      } catch (err) {}
+    }
+    expect(await strategy.rewardToOutputRoute(0)).to.equal("0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7");
+    // expect(await strategy.rewardToOutputRoute(1)).to.equal("0xc7198437980c041c805A1EDcbA50c1Ce5db95118");
+    expect(await strategy.rewardToOutputRoute(1)).to.equal("0x60781C2586D68229fde47564546784ab3fACA982");
+
+    console.log("Removing Route");
+    await strategy.removeRewardRoute();
+
+    console.log("Route after being reset");
+    for (let i = 0; i < 10; ++i) {
+      try {
+        const tokenAddress = await strategy.rewardToOutputRoute(i);
+        console.log(`Token Address ${i} -->`, tokenAddress);
+      } catch (err) {}
+    }
+    expect(await strategy.rewardToOutputRoute(0)).to.equal("0x0000000000000000000000000000000000000000");
   }).timeout(TIMEOUT);
 
   it("Displays routing correctly", async () => {
