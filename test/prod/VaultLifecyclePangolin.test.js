@@ -2,6 +2,7 @@ import { addressBook } from "blockchain-addressbook";
 import { chainCallFeeMap } from "../../utils/chainCallFeeMap";
 import { web3, ethers } from "hardhat";
 import { convertSymbolTokenMapToAddressTokenMap } from "blockchain-addressbook/build/util/convertSymbolTokenMapToAddressTokenMap";
+import { BigNumber } from "ethers";
 const { expect } = require("chai");
 
 const { zapNativeToToken, getVaultWant, unpauseIfPaused, getUnirouterData } = require("../../utils/testHelpers");
@@ -17,10 +18,10 @@ const myAddress = web3.utils.toChecksumAddress("0xD3425091b74bd097f6d8f194D30229
 const secondAddress = web3.utils.toChecksumAddress("0x5EAeA735914bf0766428C85a20429020ba688130");
 
 const config = {
-  vault: "0xDdFDB5562438a409156AebE9b7B6a30C1D6f510a",
+  vault: "0x7869E56959022E2CA3A3A188B0eE2C63631613B1",
   vaultContract: "BeefyVaultV6",
   strategyContract: "StrategyPangolinMiniChefLP",
-  testAmount: ethers.utils.parseEther("50"),
+  testAmount: ethers.utils.parseEther("5"),
   wnative: chainData.tokens.WNATIVE.address,
   // keeper: beefyfinance.keeper,
   // strategyOwner: beefyfinance.strategyOwner,
@@ -81,36 +82,31 @@ describe("VaultLifecycleTest", () => {
 
   it("Harvests work as expected.", async () => {
     await unpauseIfPaused(strategy, keeper);
-
     const wantBalStart = await want.balanceOf(deployer.address);
-    console.log("Start balance -->", wantBalStart);
     await want.approve(vault.address, wantBalStart);
     await vault.depositAll();
-
     const vaultBal = await vault.balance();
     const pricePerShare = await vault.getPricePerFullShare();
-    await delay(10000);
+    await delay(5000);
 
+    console.log("Before call reward call");
+    const rewardsAvailable = await strategy.rewardsAvailable();
+    console.log("Rewards available -->", rewardsAvailable);
+    const secondaryRewardsAvailable = await strategy.secondaryRewardsAvailable();
+    console.log("Secondary rewards available -->", secondaryRewardsAvailable);
     const callRewardBeforeHarvest = await strategy.callReward();
     console.log("Call reward -->", callRewardBeforeHarvest);
     expect(callRewardBeforeHarvest).to.be.gt(0);
 
-    console.log("Vault Balance Pre Harvest -->", vaultBal);
     await strategy["harvest()"](); // See issue why has to be called this way here: https://github.com/ethers-io/ethers.js/issues/119
-    // await strategy.managerHarvest();
     const vaultBalAfterHarvest = await vault.balance();
-    console.log("Vault Balance Post Harvest -->", vaultBalAfterHarvest);
+    console.log("Vault Balance Change -->", vaultBalAfterHarvest - vaultBal);
     const pricePerShareAfterHarvest = await vault.getPricePerFullShare();
-    //  const callRewardAfterHarvest = await strategy.callReward();
 
     await vault.withdrawAll();
     const wantBalFinal = await want.balanceOf(deployer.address);
-    console.log("Final Balance -->", wantBalFinal);
-
     expect(vaultBalAfterHarvest).to.be.gt(vaultBal);
     expect(pricePerShareAfterHarvest).to.be.gt(pricePerShare);
-    //  expect(callRewardBeforeHarvest).to.be.gt(callRewardAfterHarvest);
-
     expect(wantBalFinal).to.be.gt(wantBalStart.mul(99).div(100));
 
     const lastHarvest = await strategy.lastHarvest();
@@ -199,8 +195,10 @@ describe("VaultLifecycleTest", () => {
 
   it("Manager can set and remove extra reward routes.", async () => {
     await unpauseIfPaused(strategy, keeper);
-    await strategy.removeRewardRoute(); // Reset routes before testing
-
+    let rewardRoutes = await strategy.rewardToOutput();
+    if (rewardRoutes.length > 0) {
+      await strategy.removeLastRewardRoute(); // Remove last route before testing
+    }
     console.log("After reset");
 
     console.log("Route before being set");
@@ -212,7 +210,7 @@ describe("VaultLifecycleTest", () => {
     }
 
     console.log("Setting route");
-    await strategy.setRewardRoute([
+    await strategy.addRewardRoute([
       "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
       "0x60781C2586D68229fde47564546784ab3fACA982",
       // "0xc7198437980c041c805A1EDcbA50c1Ce5db95118",
@@ -221,25 +219,25 @@ describe("VaultLifecycleTest", () => {
     console.log("Route after being set");
     for (let i = 0; i < 10; ++i) {
       try {
-        const tokenAddress = await strategy.rewardToOutputRoute(i);
+        const rewardRoutes = await strategy.rewardToOutput();
+        const tokenAddress = rewardRoutes[0][i];
         console.log(`Token Address ${i} -->`, tokenAddress);
       } catch (err) {}
     }
-    expect(await strategy.rewardToOutputRoute(0)).to.equal("0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7");
+    rewardRoutes = await strategy.rewardToOutput();
+    expect(rewardRoutes[0]).to.deep.equal([
+      "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+      "0x60781C2586D68229fde47564546784ab3fACA982",
+    ]);
     // expect(await strategy.rewardToOutputRoute(1)).to.equal("0xc7198437980c041c805A1EDcbA50c1Ce5db95118");
-    expect(await strategy.rewardToOutputRoute(1)).to.equal("0x60781C2586D68229fde47564546784ab3fACA982");
+    // expect(await strategy.rewardToOutputRoute()).to.equal("0x60781C2586D68229fde47564546784ab3fACA982");
 
     console.log("Removing Route");
-    await strategy.removeRewardRoute();
+    await strategy.removeLastRewardRoute();
 
     console.log("Route after being reset");
-    for (let i = 0; i < 10; ++i) {
-      try {
-        const tokenAddress = await strategy.rewardToOutputRoute(i);
-        console.log(`Token Address ${i} -->`, tokenAddress);
-      } catch (err) {}
-    }
-    expect(await strategy.rewardToOutputRoute(0)).to.equal("0x0000000000000000000000000000000000000000");
+    const nullRewardRoute = await strategy.rewardToOutput();
+    expect(nullRewardRoute).to.deep.equal([]);
   }).timeout(TIMEOUT);
 
   it("Displays routing correctly", async () => {

@@ -52,9 +52,10 @@
     
     "fork:avax": "npx hardhat node --fork avax",
     "deploy:avax": "npx hardhat run --network localhost scripts/vault/deploy-pangolin.ts",
+    "deploy:avax-dual": "npx hardhat run --network localhost scripts/vault/deploy-pangolin-dual-reward.ts",
+    "deploy:avax-prod": "npx hardhat run --network avax scripts/vault/deploy-pangolin.ts",
     "deploy:avax-single": "npx hardhat run --network localhost scripts/vault/deploy-png-single-reward-pool.ts",
     "deploy:avax-single-prod": "npx hardhat run --network avax scripts/vault/deploy-png-single-reward-pool.ts",
-    "deploy:avax-prod": "npx hardhat run --network avax scripts/vault/deploy-pangolin.ts",
     "test:avax": "npx hardhat test --network localhost test/prod/VaultLifecyclePangolin.test.js",
 
     "verify-vault": "npx hardhat run --network avax scripts/vault/verify-vault-post-deployment.ts"

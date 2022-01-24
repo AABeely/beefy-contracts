@@ -18,29 +18,30 @@ const {
   },
 } = addressBook.avax;
 
-const want = web3.utils.toChecksumAddress("0x5580a9e8aE207b51d79D492A312108411097F3BB");
+const want = web3.utils.toChecksumAddress("0x1bfae75b28925bf4a5bf830c141ea29cb0a868f1");
 const minichef = web3.utils.toChecksumAddress("0x1f806f7C8dED893fd3caE279191ad7Aa3798E928");
+const LOOT = web3.utils.toChecksumAddress("0x7f041ce89a2079873693207653b24c15b5e6a293");
 
 const vaultParams = {
-  mooName: "Moo PangolinV2 USDC.e-AVAX",
-  mooSymbol: "mooPangolinV2USDC.e-AVAX",
+  mooName: "Moo PangolinV2 LOOT-AVAX",
+  mooSymbol: "mooPangolinV2LOOT-AVAX",
   delay: 21600,
 };
 
-const shouldVerifyOnEtherscan = true;
+const shouldVerifyOnEtherscan = false;
 
 const strategyParams = {
   want,
-  poolId: 9,
+  poolId: 65,
   outputToNativeRoute: [PNG, AVAX],
-  outputToLp0Route: [PNG, USDCe],
+  outputToLp0Route: [PNG, LOOT],
   outputToLp1Route: [PNG, AVAX],
-  rewardToOutputRoute: [],
+  rewardToOutputRoute: [LOOT, AVAX, PNG],
   chef: minichef,
   unirouter: pangolin.router,
   strategist: "0x5EAeA735914bf0766428C85a20429020ba688130", // some address
-  keeper: beefyfinance.keeper,
-  // keeper: "0xD3425091b74bd097f6d8f194D30229140F814F14",
+  // keeper: beefyfinance.keeper,
+  keeper: "0xD3425091b74bd097f6d8f194D30229140F814F14",
   beefyFeeRecipient: beefyfinance.beefyFeeRecipient,
   // pendingRewardsFunctionName: "pendingReward", // used for rewardsAvailable(), use correct function name from masterchef
 };
@@ -92,7 +93,7 @@ async function main() {
     strategyParams.outputToNativeRoute,
     strategyParams.outputToLp0Route,
     strategyParams.outputToLp1Route,
-    strategyParams.rewardToOutputRoute,
+    // strategyParams.rewardToOutputRoute,
   ];
 
   const strategy = await Strategy.deploy(...strategyConstructorArguments);
@@ -114,6 +115,9 @@ async function main() {
       verifyContract(strategy.address, strategyConstructorArguments)
     );
   }
+
+  await strategy.addRewardRoute(strategyParams.rewardToOutputRoute);
+
   // await setPendingRewardsFunctionName(strategy, strategyParams.pendingRewardsFunctionName);
   await setCorrectCallFee(strategy, hardhat.network.name as BeefyChain);
   console.log();
