@@ -18,7 +18,7 @@ const {
   },
 } = addressBook.avax;
 
-const want = web3.utils.toChecksumAddress("0x5580a9e8aE207b51d79D492A312108411097F3BB");
+const want = web3.utils.toChecksumAddress("0xbd918ed441767fe7924e99f6a0e0b568ac1970d9");
 const minichef = web3.utils.toChecksumAddress("0x1f806f7C8dED893fd3caE279191ad7Aa3798E928");
 
 const vaultParams = {
@@ -27,7 +27,7 @@ const vaultParams = {
   delay: 21600,
 };
 
-const shouldVerifyOnEtherscan = true;
+const shouldVerifyOnEtherscan = false;
 
 const strategyParams = {
   want,
@@ -39,8 +39,8 @@ const strategyParams = {
   chef: minichef,
   unirouter: pangolin.router,
   strategist: "0x5EAeA735914bf0766428C85a20429020ba688130", // some address
-  keeper: beefyfinance.keeper,
-  // keeper: "0xD3425091b74bd097f6d8f194D30229140F814F14",
+  // keeper: beefyfinance.keeper,
+  keeper: "0xD3425091b74bd097f6d8f194D30229140F814F14",
   beefyFeeRecipient: beefyfinance.beefyFeeRecipient,
   // pendingRewardsFunctionName: "pendingReward", // used for rewardsAvailable(), use correct function name from masterchef
 };

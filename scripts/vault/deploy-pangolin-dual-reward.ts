@@ -28,20 +28,20 @@ const vaultParams = {
   delay: 21600,
 };
 
-const shouldVerifyOnEtherscan = false;
+const shouldVerifyOnEtherscan = true;
 
 const strategyParams = {
   want,
   poolId: 65,
   outputToNativeRoute: [PNG, AVAX],
-  outputToLp0Route: [PNG, LOOT],
+  outputToLp0Route: [PNG, AVAX, LOOT],
   outputToLp1Route: [PNG, AVAX],
   rewardToOutputRoute: [LOOT, AVAX, PNG],
   chef: minichef,
   unirouter: pangolin.router,
   strategist: "0x5EAeA735914bf0766428C85a20429020ba688130", // some address
-  // keeper: beefyfinance.keeper,
-  keeper: "0xD3425091b74bd097f6d8f194D30229140F814F14",
+  keeper: beefyfinance.keeper,
+  // keeper: "0xD3425091b74bd097f6d8f194D30229140F814F14",
   beefyFeeRecipient: beefyfinance.beefyFeeRecipient,
   // pendingRewardsFunctionName: "pendingReward", // used for rewardsAvailable(), use correct function name from masterchef
 };
@@ -107,6 +107,11 @@ async function main() {
 
   console.log();
 
+  await strategy.addRewardRoute(strategyParams.rewardToOutputRoute);
+  // await setPendingRewardsFunctionName(strategy, strategyParams.pendingRewardsFunctionName);
+  await setCorrectCallFee(strategy, hardhat.network.name as BeefyChain);
+  console.log();
+
   const verifyContractsPromises: Promise<any>[] = [];
   if (shouldVerifyOnEtherscan) {
     // skip await as this is a long running operation, and you can do other stuff to prepare vault while this finishes
@@ -115,12 +120,6 @@ async function main() {
       verifyContract(strategy.address, strategyConstructorArguments)
     );
   }
-
-  await strategy.addRewardRoute(strategyParams.rewardToOutputRoute);
-
-  // await setPendingRewardsFunctionName(strategy, strategyParams.pendingRewardsFunctionName);
-  await setCorrectCallFee(strategy, hardhat.network.name as BeefyChain);
-  console.log();
 
   await Promise.all(verifyContractsPromises);
 

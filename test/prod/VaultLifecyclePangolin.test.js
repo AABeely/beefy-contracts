@@ -18,7 +18,7 @@ const myAddress = web3.utils.toChecksumAddress("0xD3425091b74bd097f6d8f194D30229
 const secondAddress = web3.utils.toChecksumAddress("0x5EAeA735914bf0766428C85a20429020ba688130");
 
 const config = {
-  vault: "0x7869E56959022E2CA3A3A188B0eE2C63631613B1",
+  vault: "0x049229A3Cf851A24c620caB629Bc0553a10F5Fd1",
   vaultContract: "BeefyVaultV6",
   strategyContract: "StrategyPangolinMiniChefLP",
   testAmount: ethers.utils.parseEther("5"),
@@ -89,16 +89,22 @@ describe("VaultLifecycleTest", () => {
     const pricePerShare = await vault.getPricePerFullShare();
     await delay(5000);
 
-    console.log("Before call reward call");
+    console.log("Before rewardAvailable call");
     const rewardsAvailable = await strategy.rewardsAvailable();
     console.log("Rewards available -->", rewardsAvailable);
-    const secondaryRewardsAvailable = await strategy.secondaryRewardsAvailable();
-    console.log("Secondary rewards available -->", secondaryRewardsAvailable);
+    // const secondaryRewardsAvailable = await strategy.secondaryRewardsAvailable();
+    // console.log("Secondary rewards available -->", secondaryRewardsAvailable);
+    console.log("Before callReward");
     const callRewardBeforeHarvest = await strategy.callReward();
     console.log("Call reward -->", callRewardBeforeHarvest);
+    // const callRewardTestBeforeHarvest = await strategy.callRewardTest();
+    // console.log("Call reward -->", callRewardTestBeforeHarvest);
+    // console.log("Call reward difference -->", callRewardBeforeHarvest - callRewardTestBeforeHarvest);
     expect(callRewardBeforeHarvest).to.be.gt(0);
 
     await strategy["harvest()"](); // See issue why has to be called this way here: https://github.com/ethers-io/ethers.js/issues/119
+    const callRewardAfterHarvest = await strategy.callReward();
+    console.log("Call reward after-->", callRewardAfterHarvest);
     const vaultBalAfterHarvest = await vault.balance();
     console.log("Vault Balance Change -->", vaultBalAfterHarvest - vaultBal);
     const pricePerShareAfterHarvest = await vault.getPricePerFullShare();
